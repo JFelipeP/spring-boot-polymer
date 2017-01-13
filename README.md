@@ -1,10 +1,11 @@
-# Spring Boot with Polymer 1.x - from Polymer Starter Kit
+# Spring Boot with Polymer 1.x
 
 This app uses Spring MVC to create REST Resources that is consumed by a Polymer SPA
 
 ##### Prerequisites
 
-Install [Gradle] or use the gradlew bash script ./gradlew build
+Install [Gradle] or use the gradlew bash script ./gradlew build.
+
 Install [Bower]   
 
 ##### Build and run the app
