@@ -1,0 +1,255 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-request.html">
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/neon-animation/neon-animations.html">
+<link rel="import" href="../bower_components/iron-form/iron-form.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/vaadin-date-picker/vaadin-date-picker.html">
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-book">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }      
+      paper-button {        
+        background-color: lightsteelblue;
+        color: white;      
+      }
+      paper-dialog.colored {        
+        color: #4285f4;
+        width: 50%;             
+      }
+      #buttons {
+        margin-bottom: 20px;
+      }    
+      [hidden] {
+        display: none;
+      } 
+      #deleteBook {
+        background-color: red;
+      }
+      paper-toast {
+        --paper-toast-background-color: steelblue;
+        --paper-toast-color: white;
+        padding-left: 80%;
+        
+      }      
+      
+    </style>
+
+    <div class="card">
+
+      <h1>Books</h1>
+
+      <div id="buttons">
+        <paper-button raised id="add-book" on-tap="formOpen">
+          <iron-icon icon="icons:add"></iron-icon>
+        </paper-button>        
+        <paper-button raised id="updateBook" on-tap="updateBook" hidden$="[[hideUpdateButton]]" >
+          <iron-icon icon="icons:create"></iron-icon>
+        </paper-button>         
+        <paper-button raised id="deleteBook" on-tap="deleteBook" hidden$="[[hideDeleteButton]]" >          
+          <iron-icon icon="icons:delete"></iron-icon>          
+        </paper-button>
+        
+      </div>       
+
+      <iron-ajax 
+        id="ajax"         
+        handle-as="json"
+        content-type="application/json"                
+        on-response="handleResponse">
+      </iron-ajax>        
+      
+      <paper-toast dynamic-align class="fit-bottom" id="toast" text="Your draft has been discarded."></paper-toast>      
+      
+      <paper-dialog id="deleteDialog" on-iron-overlay-closed="dismissDeleteDialog" >
+        <h2>Delete Action</h2>
+        <p>Delete this item? if deleted it cannot be recovered anymore.</p>   
+        <div class="delete-buttons">     
+          <paper-button raised dialog-dismiss >Cancel</paper-button>        
+          <paper-button raised dialog-confirm autofocus>Delete</paper-button>  
+        </div>     
+      </paper-dialog>
+          
+
+      <paper-dialog 
+        id="dialog" 
+        class="colored"        
+        no-cancel-on-outside-click
+        always-on-top 
+        dynamic-align
+        entry-animation="scale-up-animation"
+        exit-animation="fade-out-animation"
+        >
+        <h2>Create book</h2>
+        <form is="iron-form" id="form">
+          <paper-input label="Title" value="{{book.title}}" required></paper-input>
+          <paper-input label="Author" value="{{book.author}}" required></paper-input>           
+          <vaadin-date-picker label="Publication date" value="{{book.date}}" required></vaadin-date-picker>          
+          <paper-input label="Pages" value="{{book.pages}}" required></paper-input>
+
+          <paper-button raised on-tap="createBook">Save</paper-button>                         
+          <paper-button raised on-tap="formCancel">Cancel</paper-button>
+                    
+        </form>        
+      </paper-dialog>
+
+      <vaadin-grid id="grid" items="{{books}}" >
+        <table>
+          <colgroup>
+            <col name="id" sortable>
+            <col name="title" sortable>
+            <col name="author" sortable>
+            <col name="date" sortable>
+            <col name="pages" sortable>
+          </colgroup>
+        </table>
+      </vaadin-grid>      
+
+    </div>
+    
+  </template>
+
+  <script>
+    Polymer({
+      is: 'my-book',
+      properties: {
+        books: { // this Array will receive the json data from the rest api (array of objects).
+            type: Array,
+            value: []
+        },        
+        book: {// this Object will receive the data from the form and will be part of the body attribute of iron-ajax element
+          type: Object,
+          value: {
+            title: '',
+            author: '',
+            date: '',
+            pages: 0
+          },
+          notify: true,
+          reflectToAttribute: true
+        },
+        bookToUpdate: { // receives the object from the data selected on grid
+            type: Object,
+            value: {}
+        },
+        isGoingToUpdate: {
+            type: Boolean,
+            value: false
+        }   
+      },
+      ready: function() {
+        this.$.ajax.method = 'GET';
+        //this.$.ajax.url = 'http://localhost:8080/api/v1/books';
+        this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books';
+        this.$.ajax.generateRequest();
+      },
+      attached: function() {
+        const self = this;
+
+        // Vaadin Grid API
+        this.$.grid.addEventListener('selected-items-changed', function(e) {          
+          let selected = self.$.grid.selection.selected();  // returns index of the item selected in the grid
+          //console.log(selected);
+          self.hideDeleteButton = true;
+          self.hideUpdateButton = true;
+          self.$.grid.getItem(selected, function(error, data) {                     
+            if(!error) {
+              self.hideUpdateButton = false; 
+              self.hideDeleteButton = false;             
+              //console.log(data);
+              self.bookToUpdate = data; // two way binding between book object and grid fields          
+            }            
+          });
+
+        });
+      },
+      handleResponse: function(data) {        
+
+        if (data.detail.response instanceof Array) { // after GET request, iron-ajax returns an array of objects
+          this.set('books', data.detail.response);
+          //console.log(data.detail.response); 
+          //console.log(data);
+        }else { // after POST request, iron-ajax returns na Obect with the data submited
+                // thus, is necessary to GET request again to get new data and update the grid
+          //console.log(data.detail.response); 
+          //console.log(data);
+          // curl -i -X POST -H "Content-Type:application/json" https://polymer-boot.herokuapp.com/api/v1/books -d '{"title":"novotitulo","author":"novoautor","date":"2017-01-01","pages":200}'
+          this.$.ajax.method = 'GET';
+          this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books';
+          this.$.ajax.generateRequest();
+        }       
+        
+      },
+      formOpen: function() {
+        this.$.dialog.open();        
+      },
+      formCancel: function() {       
+        this.$.dialog.close();
+        this.book = {}; // clear form
+      },
+      createBook: function() {
+
+        if(this.$.form.validate()) {
+
+          if(this.isGoingToUpdate == true) {
+            this.$.ajax.method = 'PUT';
+            this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books/' + this.bookToUpdate.id;            
+            this.$.ajax.body = this.book;
+            this.$.ajax.generateRequest();
+            this.$.dialog.close();
+            this.book = {};
+            this.isGoingToUpdate = false;
+
+            this.$.toast.text = 'The book was updateded';
+            this.$.toast.open();
+
+          } else {
+            this.$.ajax.method = 'POST';
+            this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books';
+            this.$.ajax.body = this.book;
+            this.$.ajax.generateRequest();
+            this.$.dialog.close(); 
+            this.book = {}; // clear form    
+
+            this.$.toast.text = 'Book created: ';
+            this.$.toast.open();        
+          }
+         
+        }             
+      },
+      updateBook: function() {
+        this.isGoingToUpdate = true;        
+        this.book = this.bookToUpdate;       
+        this.$.dialog.open();               
+      },
+      deleteBook: function() {
+        this.$.deleteDialog.open();
+      },
+      dismissDeleteDialog: function(event) {               
+        if(event.detail.confirmed) {
+          let id_book = this.bookToUpdate.id;
+
+          this.$.ajax.method = 'DELETE';
+          this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books/' + id_book;
+          this.$.ajax.generateRequest();
+
+          this.$.toast.text = 'The book was deleted';
+          this.$.toast.open();
+
+        }
+
+      }
+    });
+  </script>
+</dom-module>
