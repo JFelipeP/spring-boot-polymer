@@ -11,6 +11,7 @@ Install [Bower]
 ##### Build and run the app
     
     cd [app root directory]
+    bower install
     gradle build
     gradle run
 
