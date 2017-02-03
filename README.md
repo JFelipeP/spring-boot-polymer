@@ -9,7 +9,7 @@ This is an example of Spring Boot RESTful Resource with polymer 1.x.
 - NPM
 - Bower
 
-For Node.js/NPM installation visit [https://node.js.org]. 
+For Node.js/NPM installation visit [https://nodejs.org]. 
 
 Install bower:
  
