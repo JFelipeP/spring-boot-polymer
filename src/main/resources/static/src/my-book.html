@@ -150,8 +150,8 @@
       },
       ready: function() {
         this.$.ajax.method = 'GET';
-        //this.$.ajax.url = 'http://localhost:8080/api/v1/books';
-        this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books';
+        this.$.ajax.url = 'http://localhost:8080/api/v1/books';
+        //this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books';
         this.$.ajax.generateRequest();
       },
       attached: function() {
@@ -186,7 +186,7 @@
           //console.log(data);
           // curl -i -X POST -H "Content-Type:application/json" https://polymer-boot.herokuapp.com/api/v1/books -d '{"title":"novotitulo","author":"novoautor","date":"2017-01-01","pages":200}'
           this.$.ajax.method = 'GET';
-          this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books';
+          this.$.ajax.url = 'http://localhost:8080/api/v1/books';
           this.$.ajax.generateRequest();
         }       
         
@@ -204,7 +204,7 @@
 
           if(this.isGoingToUpdate == true) {
             this.$.ajax.method = 'PUT';
-            this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books/' + this.bookToUpdate.id;            
+            this.$.ajax.url = 'http://localhost:8080/api/v1/books/' + this.bookToUpdate.id;            
             this.$.ajax.body = this.book;
             this.$.ajax.generateRequest();
             this.$.dialog.close();
@@ -216,7 +216,7 @@
 
           } else {
             this.$.ajax.method = 'POST';
-            this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books';
+            this.$.ajax.url = 'http://localhost:8080/api/v1/books';
             this.$.ajax.body = this.book;
             this.$.ajax.generateRequest();
             this.$.dialog.close(); 
@@ -241,7 +241,7 @@
           let id_book = this.bookToUpdate.id;
 
           this.$.ajax.method = 'DELETE';
-          this.$.ajax.url = 'https://polymer-boot.herokuapp.com/api/v1/books/' + id_book;
+          this.$.ajax.url = 'http://localhost:8080/api/v1/books/' + id_book;
           this.$.ajax.generateRequest();
 
           this.$.toast.text = 'The book was deleted';
